@@ -109,6 +109,11 @@ class VerilogParser(object):
         p[0] = p[1]
         p.set_lineno(0, p.lineno(1))
 
+    def p_definition_package(self, p):
+        'definition : PACKAGE ID COMMON DECL ENDPACKAGE'
+        p[0] = p[1]
+        p.set_lineno(0, p.lineno(1))
+ 
     # --------------------------------------------------------------------------
     def p_pragma_assign(self, p):
         'pragma : LPAREN TIMES ID EQUALS expression TIMES RPAREN'
@@ -545,6 +550,9 @@ class VerilogParser(object):
         if 'supply1' in sigtypes:
             decls.append(Supply(name=name, value=IntConst('1', lineno=lineno),
                                 width=width, signed=signed, lineno=lineno))
+        if 'logic' in sigtypes:
+            decls.append(Logic(name=name, width=width,
+                               signed=signed, lineno=lineno, dimensions=dimensions))
         return decls
 
     def typecheck_decl(self, sigtypes, dimensions=None):
@@ -568,6 +576,24 @@ class VerilogParser(object):
         if 'output' in sigtypes and 'tri' in sigtypes:
             raise ParseError("Syntax Error")
 
+    def create_decl_user_struct_member(self, sigtypes, name, width=None, dimensions=None, lineno=0):
+        if ('supply0' in sigtypes or 'supply1' in sigtypes):
+            raise ParseError("SyntaxError")
+        if len(sigtypes) == 1 and 'signed' in sigtypes:
+            raise ParseError("Syntax Error")
+        if 'input' in sigtypes:
+            raise ParseError("Syntax Error")
+        if 'output' in sigtypes:
+            raise ParseError("Syntax Error")
+        if 'inout' in sigtypes:
+            raise ParseError("Syntax Error")
+        if 'reg' in sigtypes:
+            raise ParseError("Syntax Error")
+        if 'tri' in sigtypes:
+            raise ParseError("Syntax Error")
+        decllist = self.create_decl(sigtypes, name, width=width, dimensions=dimensions, lineno=lineno)
+        return decllist
+        
     def p_decl(self, p):
         'decl : sigtypes declnamelist SEMICOLON'
         decllist = []
@@ -584,6 +610,58 @@ class VerilogParser(object):
             decllist.extend(self.create_decl(p[1], rname, width=p[2], dimensions=rdimensions,
                                              lineno=p.lineno(3)))
         p[0] = Decl(tuple(decllist), lineno=p.lineno(1))
+        p.set_lineno(0, p.lineno(1))
+
+    def p_decl_user(self, p):
+        'decl : TYPEDEF declusertype declnamelist SEMICOLON'
+        decllist = []
+        for rname, rdimensions in p[3]:
+            decllist.extend(UserType(name=rname, datatype=p[2],
+                lineno=p.lineno(3), dimensions=rdimensions))
+        p[0] = Decl(tuple(decllist), lineno=p.lineno(1))
+        p.set_lineno(0, p.lineno(1))
+
+    def p_decluserstruct(self, p):
+        'declusertype : STRUCT PACKED LBRACE declstructmemberlist RBRACE'
+        p[0] = StructPacked(None, p[4], None, None, p.lineno(1))
+        p.set_lineno(0, p.lineno(1))
+
+    def p_declstructmemberlist(self, p):
+        'declstructmemberlist: sigtypes declnamelist SEMICOLON'
+        decllist = []
+        for rname, rdimensions in p[2]:
+            decllist.extend(self.create_decl_user_struct_member(p[1], rname, dimensions=rdimensions,
+                                             lineno=p.lineno(2)))
+        p[0] = tuple(decllist)
+        p.set_lineno(0, p.lineno(1))
+
+    def p_declstructmemberlistwidth(self, p):
+        'declstructmemberlist : sigtypes width declnamelist SEMICOLON'
+        decllist = []
+        for rname, rdimensions in p[3]:
+            decllist.extend(self.create_decl_user_struct_member(p[1], rname, width=p[2], dimensions=rdimensions,
+                                             lineno=p.lineno(3)))
+        p[0] = tuple(decllist)
+        p.set_lineno(0, p.lineno(1))
+
+    def p_decluserdata(self, p):
+        'decl : TYPEDEF declenmu declnamelist SEMICOLON'
+        # next: declnamelist
+        decllist = []
+        for rname, rdimensions in p[3]:
+            decllist.extend(self.create_decl(p[1], rname, dimensions=rdimensions,
+                                             lineno=p.lineno(3)))
+        p[0] = tuple(decllist)
+        p.set_lineno(0, p.lineno(1))
+
+    def p_decluserenum(self, p):
+        'declusertype : ENUM LOGIC width LBRACE declenumnamelist RBRACE'
+        p[0] = (ENUM(None, 'logic', p[5]),)
+        p.set_lineno(0, p.lineno(1))
+
+    def p_declenumnamelist(self, p):
+        'declenumnamelist : declenumnamelist COMMA declname'
+        p[0] = p[1] + (p[3],)
         p.set_lineno(0, p.lineno(1))
 
     def p_declnamelist(self, p):

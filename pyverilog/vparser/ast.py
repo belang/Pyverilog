@@ -108,6 +108,21 @@ class Description(Node):
             nodelist.extend(self.definitions)
         return tuple(nodelist)
 
+class PackageDef(Node):
+    attr_names = ('name',)
+
+    def __init__(self, name, items, default_nettype='wire', lineno=0):
+        self.lineno = lineno
+        self.name = name
+        self.items = items
+        self.default_nettype = default_nettype
+
+    def children(self):
+        nodelist = []
+        if self.items:
+            nodelist.extend(self.items)
+        return tuple(nodelist)
+
 
 class ModuleDef(Node):
     attr_names = ('name',)
@@ -329,7 +344,60 @@ class Real(Variable):
 class Genvar(Variable):
     pass
 
+class Logic(Variable):
+    pass
 
+class StructPacked(Variable):
+    attr_names = ('name',)
+    def __init__(self, name, member, dimensions=None, value=None, lineno=0):
+        super(StructPacked, self).__init__(self, name, None, False, dimensions, value, lineno)
+        self.member = member
+
+    def children(self):
+        nodelist = []
+        if self.member:
+            nodelist.append(self.member)
+        if self.dimensions:
+            nodelist.append(self.dimensions)
+        if self.value:
+            nodelist.append(self.value)
+        return tuple(nodelist)
+
+class ENUM(Variable):
+    attr_names = ('name',)
+    def __init__(self, name, basetype, namedecl, dimensions=None, value=None, lineno=0):
+        super(ENUM, self).__init__(self, name, None, False, dimensions, value, lineno)
+        self.basetype = basetype
+        self.namedecl = namedecl
+
+    def children(self):
+        nodelist = []
+        if self.basetype:
+            nodelist.append(self.basetype)
+        if self.namedecl:
+            nodelist.append(self.namedecl)
+        if self.dimensions:
+            nodelist.append(self.dimensions)
+        if self.value:
+            nodelist.append(self.value)
+        return tuple(nodelist)
+
+class UserType(Variable):
+    attr_names = ('name',)
+    def __init__(self, name, datatype, dimensions=None, value=None, lineno=0):
+        super(UserType, self).__init__(self, name, None, False, dimensions, value, lineno)
+        self.datatype = datatype
+
+    def children(self):
+        nodelist = []
+        if self.datatype:
+            nodelist.append(self.datatype)
+        if self.dimensions:
+            nodelist.append(self.dimensions)
+        if self.value:
+            nodelist.append(self.value)
+        return tuple(nodelist)
+    
 class Ioport(Node):
     attr_names = ()
 
@@ -694,6 +762,27 @@ class Cond(Operator):
             nodelist.append(self.false_value)
         return tuple(nodelist)
 
+class Typedef(Node):
+    attr_names = ()
+
+    def __init__(self, datatype, right, ldelay=None, rdelay=None, lineno=0):
+        self.lineno = lineno
+        self.datatype = datatype
+        self.right = right
+        self.ldelay = ldelay
+        self.rdelay = rdelay
+
+    def children(self):
+        nodelist = []
+        if self.left:
+            nodelist.append(self.left)
+        if self.right:
+            nodelist.append(self.right)
+        if self.ldelay:
+            nodelist.append(self.ldelay)
+        if self.rdelay:
+            nodelist.append(self.rdelay)
+        return tuple(nodelist)
 
 class Assign(Node):
     attr_names = ()

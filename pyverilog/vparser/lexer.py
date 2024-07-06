@@ -58,6 +58,8 @@ class VerilogLexer(object):
         'ASSIGN', 'ALWAYS', 'ALWAYS_FF', 'ALWAYS_COMB', 'ALWAYS_LATCH', 'SENS_OR', 'POSEDGE', 'NEGEDGE', 'INITIAL',
         'IF', 'ELSE', 'FOR', 'WHILE', 'CASE', 'CASEX', 'CASEZ', 'UNIQUE', 'ENDCASE', 'DEFAULT',
         'WAIT', 'FOREVER', 'DISABLE', 'FORK', 'JOIN',
+        'PACKAGE', 'ENDPACKAGE', 'IMPORT',
+        'TYPEDEF', 'STRUCT', 'PACKED', 'ENUM',
     )
 
     reserved = {}
@@ -88,6 +90,7 @@ class VerilogLexer(object):
         'INTNUMBER_BIN', 'SIGNED_INTNUMBER_BIN',
         'LPAREN', 'RPAREN', 'LBRACKET', 'RBRACKET', 'LBRACE', 'RBRACE',
         'DELAY', 'DOLLER',
+        'DOUBLECOLON',
     )
 
     skipped = (
@@ -179,6 +182,8 @@ class VerilogLexer(object):
 
     t_DELAY = r'\#'
     t_DOLLER = r'\$'
+    
+    t_DOUBLECOLON = r'::'
 
     bin_number = '[0-9]*\'[bB][0-1xXzZ?][0-1xXzZ?_]*'
     signed_bin_number = '[0-9]*\'[sS][bB][0-1xZzZ?][0-1xXzZ?_]*'
